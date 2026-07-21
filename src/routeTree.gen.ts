@@ -14,6 +14,7 @@ import { Route as AgentsRouteImport } from './routes/agents'
 import { Route as ChatbotsRouteImport } from './routes/chatbots'
 import { Route as ConnectorsRouteImport } from './routes/connectors'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as OmnichatRouteImport } from './routes/omnichat'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as UsersRouteImport } from './routes/users'
 
@@ -42,6 +43,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OmnichatRoute = OmnichatRouteImport.update({
+  id: '/omnichat',
+  path: '/omnichat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/chatbots': typeof ChatbotsRoute
   '/connectors': typeof ConnectorsRoute
   '/dashboard': typeof DashboardRoute
+  '/omnichat': typeof OmnichatRoute
   '/settings': typeof SettingsRoute
   '/users': typeof UsersRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/chatbots': typeof ChatbotsRoute
   '/connectors': typeof ConnectorsRoute
   '/dashboard': typeof DashboardRoute
+  '/omnichat': typeof OmnichatRoute
   '/settings': typeof SettingsRoute
   '/users': typeof UsersRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/chatbots': typeof ChatbotsRoute
   '/connectors': typeof ConnectorsRoute
   '/dashboard': typeof DashboardRoute
+  '/omnichat': typeof OmnichatRoute
   '/settings': typeof SettingsRoute
   '/users': typeof UsersRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/chatbots'
     | '/connectors'
     | '/dashboard'
+    | '/omnichat'
     | '/settings'
     | '/users'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/chatbots'
     | '/connectors'
     | '/dashboard'
+    | '/omnichat'
     | '/settings'
     | '/users'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/chatbots'
     | '/connectors'
     | '/dashboard'
+    | '/omnichat'
     | '/settings'
     | '/users'
   fileRoutesById: FileRoutesById
@@ -117,6 +129,7 @@ export interface RootRouteChildren {
   ChatbotsRoute: typeof ChatbotsRoute
   ConnectorsRoute: typeof ConnectorsRoute
   DashboardRoute: typeof DashboardRoute
+  OmnichatRoute: typeof OmnichatRoute
   SettingsRoute: typeof SettingsRoute
   UsersRoute: typeof UsersRoute
 }
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/omnichat': {
+      id: '/omnichat'
+      path: '/omnichat'
+      fullPath: '/omnichat'
+      preLoaderRoute: typeof OmnichatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -181,6 +201,7 @@ const rootRouteChildren: RootRouteChildren = {
   ChatbotsRoute: ChatbotsRoute,
   ConnectorsRoute: ConnectorsRoute,
   DashboardRoute: DashboardRoute,
+  OmnichatRoute: OmnichatRoute,
   SettingsRoute: SettingsRoute,
   UsersRoute: UsersRoute,
 }

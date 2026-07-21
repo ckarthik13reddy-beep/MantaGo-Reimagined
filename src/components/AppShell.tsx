@@ -24,6 +24,7 @@ type NavItem = {
 
 const WORKSPACE: NavItem[] = [
   { to: "/", label: "Chat", icon: MessageSquare, badge: { count: 3, tone: "red" } },
+  { to: "/omnichat", label: "OmniChat", icon: Search, badge: { count: 4, tone: "green" } },
   { to: "/chatbots", label: "Chatbots", icon: Bot },
   { to: "/dashboard", label: "Dashboard", icon: LayoutGrid, badge: { count: 12, tone: "blue" } },
   { to: "/users", label: "Customers", icon: UsersRound },
