@@ -10,6 +10,8 @@ export type Msg = {
   connector?: string;
   action?: string;
   at: number;
+  // Inline "chatbot draft" card rendered under an assistant message.
+  draft?: ChatbotDraft;
 };
 
 export type Conversation = {
@@ -17,6 +19,37 @@ export type Conversation = {
   title: string;
   updatedAt: number;
   messages: Msg[];
+};
+
+export const FEATURE_CATALOG: { id: string; name: string; blurb: string }[] = [
+  { id: "forms",        name: "Forms",              blurb: "Collect leads, orders, feedback." },
+  { id: "linkTracking", name: "Link tracking",      blurb: "Short links with click stats." },
+  { id: "booking",      name: "Booking & meetings", blurb: "Let customers pick a slot." },
+  { id: "quiz",         name: "Short quizzes",      blurb: "Fun 3-question quizzes to qualify." },
+  { id: "coupons",      name: "Coupon management",  blurb: "Issue and validate discount codes." },
+  { id: "rewards",      name: "Reward cards",       blurb: "Digital stamp cards for regulars." },
+  { id: "roulette",     name: "Roulette",           blurb: "Spin-to-win engagement game." },
+  { id: "campaign",     name: "Campaign prize",     blurb: "Prize draws tied to a campaign." },
+];
+
+export const MEDIA_CATALOG = ["text","image","card","video","location","attachment","file","audio"] as const;
+export type MediaKind = typeof MEDIA_CATALOG[number];
+
+export type ChatbotMetrics = {
+  formsSubmitted: number;
+  linkClicks: number;
+  meetingsBooked: number;
+  quizCompleted: number;
+  couponsRedeemed: number;
+  rewardsIssued: number;
+  rouletteSpins: number;
+  campaignEntries: number;
+};
+
+export type TrainingSample = {
+  id: string;
+  persona: "VIP" | "Regular" | "New" | "At risk";
+  sample: string;
 };
 
 export type Chatbot = {
@@ -27,6 +60,27 @@ export type Chatbot = {
   knows: string[];
   wont: string[];
   createdFromChat?: boolean;
+  purpose?: string;
+  persona?: string;
+  features: string[];
+  mediaSupport: MediaKind[];
+  connectors: string[];
+  businessLogic: string[];
+  guardrails: string[];
+  testMessages?: Msg[];
+  trainingSamples?: TrainingSample[];
+  metrics?: ChatbotMetrics;
+};
+
+export type ChatbotDraft = {
+  name: string;
+  channel: string;
+  purpose: string;
+  features: string[];
+  mediaSupport: MediaKind[];
+  connectors: string[];
+  guardrails: string[];
+  saved?: boolean;
 };
 
 export type Agent = {
@@ -54,7 +108,7 @@ export type SemanticRule = {
   text: string;
 };
 
-const KEY = "mantago.v2";
+const KEY = "mantago.v3";
 
 type Store = {
   conversations: Conversation[];
@@ -63,6 +117,27 @@ type Store = {
   semantic: SemanticRule[];
   customers: Customer[];
 };
+
+function defaultMetrics(seed = 1): ChatbotMetrics {
+  const r = (n: number) => Math.round(n * seed);
+  return {
+    formsSubmitted: r(184),
+    linkClicks: r(1220),
+    meetingsBooked: r(46),
+    quizCompleted: r(312),
+    couponsRedeemed: r(87),
+    rewardsIssued: r(58),
+    rouletteSpins: r(240),
+    campaignEntries: r(410),
+  };
+}
+
+const DEFAULT_TRAINING: TrainingSample[] = [
+  { id: "t1", persona: "VIP",     sample: "Khun Ploy (VIP, ฿12k / 90d) — always asks for the new arrivals first. Reply warmly, offer to hold the item, mention free delivery." },
+  { id: "t2", persona: "Regular", sample: "Khun Nan (Regular) — cares about opening hours and delivery windows. Keep answers short and factual." },
+  { id: "t3", persona: "New",     sample: "First-time buyer — introduce the top 3 sellers, offer the 10% off welcome code, then ask for their delivery area." },
+  { id: "t4", persona: "At risk", sample: "Khun Ton (At risk, no order in 45 days) — apologise for missing them, offer a small win-back coupon, ask what would bring them back." },
+];
 
 const DEFAULT: Store = {
   conversations: [
@@ -74,9 +149,48 @@ const DEFAULT: Store = {
     { id: "c6", title: "Menu photos for IG",            updatedAt: Date.now() - 1000 * 60 * 60 * 120, messages: seed("Draft captions for our new menu photos") },
   ],
   chatbots: [
-    { id: "1", name: "Café front-of-house", channel: "LINE",      status: "live",  knows: ["Opening hours", "Menu & prices", "Reservation policy", "Delivery zones"], wont: ["Take payments", "Discuss staff details"] },
-    { id: "2", name: "Instagram DM helper", channel: "Instagram", status: "live",  knows: ["New arrivals", "Sizing chart", "Return window"], wont: ["Share supplier names", "Give personal discounts"] },
-    { id: "3", name: "After-hours WhatsApp",channel: "WhatsApp",  status: "draft", knows: ["Business hours", "Emergency contact"], wont: ["Confirm bookings", "Share pricing"] },
+    {
+      id: "1", name: "Café front-of-house", channel: "LINE", status: "live",
+      knows: ["Opening hours", "Menu & prices", "Reservation policy", "Delivery zones"],
+      wont: ["Take payments", "Discuss staff details"],
+      purpose: "Answer LINE customers about the café: hours, menu, reservations and delivery.",
+      persona: "Warm, concise, uses light Thai greetings.",
+      features: ["forms","booking","coupons","rewards"],
+      mediaSupport: ["text","image","card","location","file"],
+      connectors: ["line","sheets"],
+      businessLogic: ["Delivery is free inside Bangkok over ฿500.", "Reservations only between 11:00–21:00."],
+      guardrails: ["Never quote wholesale prices.", "Don't confirm bookings without a name and phone."],
+      trainingSamples: DEFAULT_TRAINING,
+      metrics: defaultMetrics(1),
+    },
+    {
+      id: "2", name: "Instagram DM helper", channel: "Instagram", status: "live",
+      knows: ["New arrivals", "Sizing chart", "Return window"],
+      wont: ["Share supplier names", "Give personal discounts"],
+      purpose: "Handle Instagram DMs about products, sizing and returns.",
+      persona: "Playful, uses emojis sparingly.",
+      features: ["linkTracking","coupons","quiz","campaign"],
+      mediaSupport: ["text","image","card","video","attachment"],
+      connectors: ["instagram","shopify"],
+      businessLogic: ["A VIP has spent > ฿5,000 in the last 90 days."],
+      guardrails: ["No discounts above 15% without approval.", "Don't discuss competitors."],
+      trainingSamples: DEFAULT_TRAINING,
+      metrics: defaultMetrics(0.7),
+    },
+    {
+      id: "3", name: "After-hours WhatsApp", channel: "WhatsApp", status: "draft",
+      knows: ["Business hours", "Emergency contact"],
+      wont: ["Confirm bookings", "Share pricing"],
+      purpose: "Handle WhatsApp customers between 10pm–8am with polite deflection.",
+      persona: "Apologetic, brief.",
+      features: ["forms","linkTracking"],
+      mediaSupport: ["text","file","audio","location"],
+      connectors: ["whatsapp"],
+      businessLogic: ["After-hours = 22:00–08:00 Bangkok time."],
+      guardrails: ["Never promise a callback time under 12 hours."],
+      trainingSamples: DEFAULT_TRAINING,
+      metrics: defaultMetrics(0.3),
+    },
   ],
   agents: [
     { id: "a0", name: "24/7 deal closer", tag: "Revenue", description: "Follows up leads round the clock, negotiates within your rules and takes the payment link the moment they say yes.", autonomous: true },
@@ -161,7 +275,6 @@ export function useStore(): [Store, (m: (s: Store) => Store) => void] {
   useEffect(() => {
     const l = () => tick((n) => n + 1);
     listeners.add(l);
-    // First mount: force a re-read from localStorage in case SSR gave defaults
     cache = load();
     l();
     return () => { listeners.delete(l); };
@@ -170,3 +283,7 @@ export function useStore(): [Store, (m: (s: Store) => Store) => void] {
 }
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
+
+export function emptyMetrics(): ChatbotMetrics {
+  return { formsSubmitted: 0, linkClicks: 0, meetingsBooked: 0, quizCompleted: 0, couponsRedeemed: 0, rewardsIssued: 0, rouletteSpins: 0, campaignEntries: 0 };
+}
